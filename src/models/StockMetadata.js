@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 
+/**
+ * StockMetadata Schema - Only schema definition
+ * Queries moved to Repository layer
+ */
 const stockMetadataSchema = new mongoose.Schema({
   code: {
     type: String,
@@ -33,21 +37,9 @@ const stockMetadataSchema = new mongoose.Schema({
   collection: 'stockmetadatas',
 });
 
-stockMetadataSchema.statics.findOrCreate = async function (stockCode, name = '', sector = '') {
-  let stock = await this.findOne({ code: stockCode.toUpperCase() });
-  if (!stock) {
-    stock = await this.create({
-      code: stockCode.toUpperCase(),
-      name: name || stockCode,
-      sector: sector || 'Unknown',
-    });
-  }
-  return stock;
-};
-
-stockMetadataSchema.methods.touch = function () {
-  this.lastUpdated = new Date();
-  return this.save();
+// Simple statics only
+stockMetadataSchema.statics.findByCode = function (code) {
+  return this.findOne({ code: code.toUpperCase() });
 };
 
 module.exports = mongoose.model('StockMetadata', stockMetadataSchema);

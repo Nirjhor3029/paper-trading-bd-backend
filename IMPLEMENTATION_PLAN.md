@@ -13,13 +13,15 @@
 - [x] Create package.json
 - [x] Setup Express app with middleware (Helmet, CORS, Morgan)
 - [x] Configure MongoDB connection
-- [x] Define Models (StockMetadata, StockPrice) - Added `open` field
-- [x] Implement Services (Business Logic) - Updated changePercent calculation
-- [x] Implement Controllers (Request Handlers)
+- [x] Define Models (StockMetadata, StockPrice) - Schema only
+- [x] Implement Repository Layer (Data Access)
+- [x] Implement Services (Business Logic)
+- [x] Implement Controllers (Request Handlers) - HTTP only
 - [x] Setup Routes (API Endpoints)
 - [x] Add Middlewares (Error, Validation, Security)
 - [x] Add Utils (Logger with Winston)
 - [x] Create server entry point with startup banner
+- [x] Add DB connection test endpoint (/api/health/db)
 - [ ] Test API endpoints with MongoDB running
 
 ---
@@ -30,12 +32,13 @@
 back-end/
 ├── src/
 │   ├── config/          # Configuration (DB, env)
-│   ├── controllers/     # Request handlers
-│   ├── models/          # Mongoose schemas
+│   ├── controllers/     # HTTP request handlers
+│   ├── repositories/    # Data access layer (queries/aggregations)
+│   ├── models/          # Mongoose schemas only
 │   ├── routes/          # API route definitions
 │   ├── services/        # Business logic
-│   ├── middlewares/     # Express middlewares
-│   └── utils/           # Helper functions
+│   ├── middlewares/     # Error & validation handlers
+│   └── utils/           # Logger & helpers
 ├── server.js            # Entry point
 ├── package.json
 └── .env                 # Environment variables

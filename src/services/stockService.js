@@ -1,70 +1,89 @@
-const StockMetadata = require('../models/StockMetadata');
-const StockPrice = require('../models/StockPrice');
-const logger = require('../utils/logger');
+const stockRepo = require('../repositories/stockRepository');
 
+/**
+ * Service Class - Business Logic Layer
+ * Handles business rules, calls Repository for data access
+ */
 class StockService {
+  /**
+   * Get all latest stock prices
+   * @returns {Promise<Array>} Latest prices for all stocks
+   */
   async getAllLatestPrices() {
     try {
-      const prices = await StockPrice.findLatestPrices();
-      return prices;
+      return await stockRepo.findLatestPrices();
     } catch (error) {
-      logger.error('Error in getAllLatestPrices:', error);
       throw error;
     }
   }
 
+  /**
+   * Get stock by code with latest price
+   * @param {string} code - Stock code
+   * @returns {Promise<Object|null>} Stock with latest price or null
+   */
   async getStockByCode(code) {
     try {
-      const stock = await StockMetadata.findOne({ code: code.toUpperCase() });
+      const stock = await stockRepo.findMetadataByCode(code);
       if (!stock) return null;
 
-      const latestPrice = await StockPrice.findOne({ stockId: stock._id })
-        .sort({ date: -1 });
-
-      return { stock, latestPrice };
+      const latestPrice = await stockRepo.findByStockId(stock._id, 1);
+      return { stock, latestPrice: latestPrice[0] || null };
     } catch (error) {
-      logger.error(`Error in getStockByCode for ${code}:`, error);
       throw error;
     }
   }
 
+  /**
+   * Get historical data for a stock
+   * @param {string} code - Stock code
+   * @param {number} days - Number of days
+   * @returns {Promise<Array>} Historical price data
+   */
   async getHistoricalData(code, days = 30) {
     try {
-      const stock = await StockMetadata.findOne({ code: code.toUpperCase() });
-      if (!stock) return [];
-
-      const date = new Date();
-      date.setDate(date.getDate() - days);
-
-      return await StockPrice.find({
-        stockId: stock._id,
-        date: { $gte: date },
-      }).sort({ date: -1 });
+      return await stockRepo.findHistoricalByCode(code, days);
     } catch (error) {
-      logger.error(`Error in getHistoricalData for ${code}:`, error);
       throw error;
     }
   }
 
+  /**
+   * Get all stock metadata
+   * @returns {Promise<Array>} All active stock metadata
+   */
   async getAllMetadata() {
     try {
-      return await StockMetadata.find({ isActive: true }).sort({ code: 1 });
+      return await stockRepo.findAllMetadata();
     } catch (error) {
-      logger.error('Error in getAllMetadata:', error);
       throw error;
     }
   }
 
+  /**
+   * Update stock metadata
+   * @param {string} code - Stock code
+   * @param {Object} updates - Fields to update
+   * @returns {Promise<Object|null>} Updated stock or null
+   */
   async updateMetadata(code, updates) {
     try {
-      const stock = await StockMetadata.findOneAndUpdate(
-        { code: code.toUpperCase() },
-        { ...updates, lastUpdated: new Date() },
-        { new: true }
-      );
-      return stock;
+      return await stockRepo.updateMetadata(code, updates);
     } catch (error) {
-      logger.error(`Error in updateMetadata for ${code}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Save stock data to DB (for scraper integration)
+   * @param {Array} stockDataArray - Array of scraped stock data
+   * @returns {Promise<void>}
+   */
+  async saveStockToDB(stockDataArray) {
+    try {
+      const Service = require('./scraperService'); // Lazy load to avoid circular
+      return await Service.saveStockToDB(stockDataArray);
+    } catch (error) {
       throw error;
     }
   }

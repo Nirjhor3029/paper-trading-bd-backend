@@ -1,17 +1,21 @@
 const mongoose = require('mongoose');
 const stockService = require('../services/stockService');
 const logger = require('../utils/logger');
+const StockDTO = require('../dtos/stock.dto');
+const ResponseFormatter = require('../utils/response');
+const { NotFoundError, ServiceUnavailableError } = require('../utils/errors');
 
+/**
+ * Stock Controller - HTTP Request Handlers Only
+ * Uses DTO for data shaping and ResponseFormatter for consistent responses
+ */
 class StockController {
   async getLatestPrices(req, res, next) {
     try {
       const prices = await stockService.getAllLatestPrices();
-      
-      res.status(200).json({
-        success: true,
-        count: prices.length,
-        data: prices,
-      });
+      const formattedData = StockDTO.toLatestPricesResponse(prices);
+
+      ResponseFormatter.success(res, formattedData, 'Latest prices retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -23,16 +27,11 @@ class StockController {
       const result = await stockService.getStockByCode(code);
 
       if (!result) {
-        return res.status(404).json({
-          success: false,
-          message: `Stock with code ${code} not found`,
-        });
+        return next(new NotFoundError(`Stock with code ${code}`));
       }
 
-      res.status(200).json({
-        success: true,
-        data: result,
-      });
+      const formattedData = StockDTO.toStockWithPriceResponse(result.stock, result.latestPrice);
+      ResponseFormatter.success(res, formattedData, 'Stock retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -45,13 +44,12 @@ class StockController {
 
       const data = await stockService.getHistoricalData(code, days);
 
-      res.status(200).json({
-        success: true,
-        stockCode: code.toUpperCase(),
-        days,
-        count: data.length,
-        data,
-      });
+      if (!data || data.length === 0) {
+        return next(new NotFoundError(`Historical data for stock ${code}`));
+      }
+
+      const formattedData = data.map((price) => StockDTO.toHistoricalResponse(price));
+      ResponseFormatter.success(res, formattedData, 'Historical data retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -60,11 +58,9 @@ class StockController {
   async getAllMetadata(req, res, next) {
     try {
       const metadata = await stockService.getAllMetadata();
-      res.status(200).json({
-        success: true,
-        count: metadata.length,
-        data: metadata,
-      });
+      const formattedData = StockDTO.toMetadataResponse(metadata);
+
+      ResponseFormatter.success(res, formattedData, 'Metadata retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -78,89 +74,74 @@ class StockController {
       const stock = await stockService.updateMetadata(code, updates);
 
       if (!stock) {
-        return res.status(404).json({
-          success: false,
-          message: `Stock with code ${code} not found`,
-        });
+        return next(new NotFoundError(`Stock with code ${code}`));
       }
 
-      res.status(200).json({
-        success: true,
-        message: `Stock ${code} metadata updated successfully`,
-        data: stock,
+      const formattedData = StockDTO.toMetadataResponse(stock);
+      ResponseFormatter.success(res, formattedData, `Stock ${code} metadata updated successfully`);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async healthCheck(req, res, next) {
+    try {
+      const dbStatus = mongoose.connection.readyState;
+      const dbStates = {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting',
+      };
+
+      const status = dbStatus === 1 ? 'ok' : 'error';
+      const statusCode = dbStatus === 1 ? 200 : 503;
+
+      res.status(statusCode).json({
+        status,
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        database: {
+          status: dbStates[dbStatus] || 'unknown',
+          state: dbStatus,
+          host: mongoose.connection.host || 'not connected',
+        },
       });
     } catch (error) {
       next(error);
     }
   }
 
-  async healthCheck(req, res) {
-    const dbStatus = mongoose.connection.readyState;
-    const dbStates = {
-      0: 'disconnected',
-      1: 'connected',
-      2: 'connecting',
-      3: 'disconnecting'
-    };
-    
-    res.status(200).json({
-      status: dbStatus === 1 ? 'ok' : 'error',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      database: {
-        status: dbStates[dbStatus] || 'unknown',
-        state: dbStatus,
-        host: mongoose.connection.host || 'not connected'
-      }
-    });
-  }
-
-  async testDBConnection(req, res) {
+  async testDBConnection(req, res, next) {
     try {
       const dbStatus = mongoose.connection.readyState;
 
-      const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/dse_scraper';
-      
       if (dbStatus !== 1) {
-        return res.status(503).json({
-          success: false,
-          message: 'Database not connected',
-          database: {
-            status: dbStatus,
-            uri: MONGODB_URI.replace(/\/\/.*@/, '//[credentials]@')
-          },
-          dbStatus: dbStatus,
-          hint: 'Check MONGODB_URI environment variable'
-        });
+        return next(new ServiceUnavailableError('Database'));
       }
-      
-      // Try a simple query to verify DB is working
-      const StockMetadata = require('../models/StockMetadata');
-      const count = await StockMetadata.countDocuments();
-      
-      res.status(200).json({
-        success: true,
-        message: 'Database connection successful',
-        database: {
-          status: 'connected',
-          host: mongoose.connection.host,
-          name: mongoose.connection.name,
-          collections: {
-            stockMetadata: count
-          }
+
+      const metadata = await stockService.getAllMetadata();
+
+      ResponseFormatter.success(
+        res,
+        {
+          database: {
+            status: 'connected',
+            host: mongoose.connection.host,
+            name: mongoose.connection.name,
+            collections: {
+              stockMetadata: metadata.length,
+            },
+          },
+          env: {
+            nodeEnv: process.env.NODE_ENV || 'development',
+            mongoUriSet: !!process.env.MONGODB_URI,
+          },
         },
-        env: {
-          nodeEnv: process.env.NODE_ENV || 'development',
-          mongoUriSet: !!process.env.MONGODB_URI
-        }
-      });
+        'Database connection successful'
+      );
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Database connection test failed',
-        error: error.message,
-        hint: 'Verify MONGODB_URI is correct and Atlas IP whitelist includes Vercel'
-      });
+      next(error);
     }
   }
 }
