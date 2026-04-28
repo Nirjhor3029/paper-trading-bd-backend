@@ -1,35 +1,20 @@
 const mongoose = require('mongoose');
-const logger = require('../utils/logger');
 
-const connectDB = async () => {
-  try {
-    const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/dse_scraper';
+let cached = global.mongoose;
 
-    console.log("MONGODB_URI:");
-    console.log(process.env.MONGODB_URI);
-    
-    await mongoose.connect(MONGODB_URI);
-    
-    logger.info('MongoDB connected successfully');
-    
-    mongoose.connection.on('error', (err) => {
-      logger.error('MongoDB connection error:', err);
-    });
-    
-    mongoose.connection.on('disconnected', () => {
-      logger.warn('MongoDB disconnected');
-    });
-    
-    process.on('SIGINT', async () => {
-      await mongoose.connection.close();
-      logger.info('MongoDB connection closed through app termination');
-      process.exit(0);
-    });
-    
-  } catch (error) {
-    logger.error('Failed to connect to MongoDB:', error);
-    process.exit(1);
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function connectDB() {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(process.env.MONGODB_URI).then(m => m);
   }
-};
+
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
 
 module.exports = connectDB;
