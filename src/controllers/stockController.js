@@ -127,7 +127,7 @@ class StockController {
           message: 'Database not connected',
           database: {
             status: dbStatus,
-            uri: MONGODB_URI
+            uri: MONGODB_URI.replace(/\/\/.*@/, '//[credentials]@')
           },
           dbStatus: dbStatus,
           hint: 'Check MONGODB_URI environment variable'
