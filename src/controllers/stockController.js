@@ -12,7 +12,8 @@ const { NotFoundError, ServiceUnavailableError } = require('../utils/errors');
 class StockController {
   async getLatestPrices(req, res, next) {
     try {
-      const prices = await stockService.getAllLatestPrices();
+      const sortBy = req.query.sortBy || 'code'; // 'code', 'date', or 'sector'
+      const prices = await stockService.getAllLatestPrices(sortBy);
       const formattedData = StockDTO.toLatestPricesResponse(prices);
 
       ResponseFormatter.success(res, formattedData, 'Latest prices retrieved successfully');

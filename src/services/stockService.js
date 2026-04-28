@@ -7,11 +7,12 @@ const stockRepo = require('../repositories/stockRepository');
 class StockService {
   /**
    * Get all latest stock prices
+   * @param {string} sortBy - Sort order: 'code', 'date', 'sector'
    * @returns {Promise<Array>} Latest prices for all stocks
    */
-  async getAllLatestPrices() {
+  async getAllLatestPrices(sortBy = 'code') {
     try {
-      return await stockRepo.findLatestPrices();
+      return await stockRepo.findLatestPrices(sortBy);
     } catch (error) {
       throw error;
     }

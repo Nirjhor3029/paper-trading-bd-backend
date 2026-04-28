@@ -1,0 +1,29 @@
+Option B: Keep current alphabetical sort, no change needed
+but
+"data": [
+{
+"stockCode": "1JANATAMF",
+"stockName": "1JANATAMF",
+"sector": "Unknown",
+"date": "2026-04-28",
+"prices": {
+"open": 3,
+"ltp": 3,
+"high": 3.1,
+"low": 3,
+"close": 0,
+"ycp": 3.1,
+"change": -0.1,
+"changePercent": -3.225806451612903,
+"trade": 65,
+"value": 1.984,
+"volume": 642923,
+"dseIndex ": 239
+},
+"metadata": {
+"stockId": "69eef89219460d4d5a512907",
+"lastUpdated": "2026-04-28T00:00:00.000Z"
+}
+},
+
+metadata te stockId dio na. eita security issue.. so no need

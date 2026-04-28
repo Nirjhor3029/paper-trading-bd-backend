@@ -10,9 +10,18 @@ const StockMetadata = require('../models/StockMetadata');
 class StockRepository {
   /**
    * Get latest prices for all stocks with aggregation
+   * @param {string} sortBy - Sort order: 'code' (default), 'date', 'sector'
    * @returns {Promise<Array>} Array of latest stock prices with metadata
    */
-  async findLatestPrices() {
+  async findLatestPrices(sortBy = 'code') {
+    // Determine final sort stage
+    let finalSort = { stockCode: 1 }; // Default: alphabetical
+    if (sortBy === 'date') {
+      finalSort = { date: -1 }; // Most recent first
+    } else if (sortBy === 'sector') {
+      finalSort = { sector: 1, stockCode: 1 }; // By sector, then code
+    }
+
     return StockPrice.aggregate([
       { $sort: { date: -1, scrapedAt: -1 } },
       {
@@ -57,7 +66,7 @@ class StockRepository {
           },
         },
       },
-      { $sort: { stockCode: 1 } }
+      { $sort: finalSort }
     ]);
   }
 

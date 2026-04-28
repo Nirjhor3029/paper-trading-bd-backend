@@ -29,10 +29,7 @@ class StockDTO {
         volume: data.volume || 0,
         dseIndex: data.dseIndex || 0,
       },
-      metadata: {
-        stockId: data.stockId || null,
-        lastUpdated: data.date || null,
-      },
+      // NO metadata.stockId for security
     };
   }
 
@@ -91,17 +88,24 @@ class StockDTO {
   }
 
   /**
-   * Format metadata only
+   * Format metadata only - NO stockId for security
    * @param {Object} metadata - StockMetadata
    * @returns {Object} Formatted DTO
    */
   static toMetadataResponse(metadata) {
     if (Array.isArray(metadata)) {
-      return metadata.map((m) => StockDTO.toMetadataResponse(m));
+      return metadata.map((m) => ({
+        code: m.code,
+        name: m.name,
+        sector: m.sector,
+        isActive: m.isActive,
+        lastUpdated: m.lastUpdated,
+        createdAt: m.createdAt,
+        updatedAt: m.updatedAt,
+      }));
     }
 
     return {
-      id: metadata._id,
       code: metadata.code,
       name: metadata.name,
       sector: metadata.sector,
