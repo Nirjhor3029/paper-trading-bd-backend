@@ -4,6 +4,9 @@ const logger = require('../utils/logger');
 const connectDB = async () => {
   try {
     const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/dse_scraper';
+
+    console.log("MONGODB_URI:");
+    console.log(process.env.MONGODB_URI);
     
     await mongoose.connect(MONGODB_URI);
     
