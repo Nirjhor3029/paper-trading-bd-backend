@@ -1,8 +1,6 @@
+http://localhost:5000/api/health/
 {
 "success": false,
-"message": "Operation `stockprices.aggregate()` buffering timed out after 10000ms",
-"stack": null
+"message": "mongoose is not defined",
+"stack": "ReferenceError: mongoose is not defined\n    at healthCheck (E:\\dev\\projects\\Trading\\back-end\\src\\controllers\\stockController.js:97:22)\n    at Layer.handleRequest (E:\\dev\\projects\\Trading\\back-end\\node_modules\\router\\lib\\layer.js:152:17)\n    at next (E:\\dev\\projects\\Trading\\back-end\\node_modules\\router\\lib\\route.js:157:13)\n    at Route.dispatch (E:\\dev\\projects\\Trading\\back-end\\node_modules\\router\\lib\\route.js:117:3)\n    at handle (E:\\dev\\projects\\Trading\\back-end\\node_modules\\router\\index.js:435:11)\n    at Layer.handleRequest (E:\\dev\\projects\\Trading\\back-end\\node_modules\\router\\lib\\layer.js:152:17)\n    at E:\\dev\\projects\\Trading\\back-end\\node_modules\\router\\index.js:295:15\n    at processParams (E:\\dev\\projects\\Trading\\back-end\\node_modules\\router\\index.js:582:12)\n    at next (E:\\dev\\projects\\Trading\\back-end\\node_modules\\router\\index.js:291:5)\n    at Function.handle (E:\\dev\\projects\\Trading\\back-end\\node_modules\\router\\index.js:186:3)"
 }
-
-local e http://localhost:5000/api/stocks eita dile thik thak acse.
-but live e https://paper-trading-bd-backend.vercel.app/api/stocks eita dile uporer moto upor ase. keno?

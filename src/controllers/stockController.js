@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const stockService = require('../services/stockService');
 const logger = require('../utils/logger');
 
