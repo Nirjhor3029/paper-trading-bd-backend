@@ -1,0 +1,8 @@
+{
+"success": false,
+"message": "Operation `stockprices.aggregate()` buffering timed out after 10000ms",
+"stack": null
+}
+
+local e http://localhost:5000/api/stocks eita dile thik thak acse.
+but live e https://paper-trading-bd-backend.vercel.app/api/stocks eita dile uporer moto upor ase. keno?
