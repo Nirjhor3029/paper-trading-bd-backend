@@ -118,11 +118,17 @@ class StockController {
   async testDBConnection(req, res) {
     try {
       const dbStatus = mongoose.connection.readyState;
+
+      const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/dse_scraper';
       
       if (dbStatus !== 1) {
         return res.status(503).json({
           success: false,
           message: 'Database not connected',
+          database: {
+            status: dbStatus,
+            uri: MONGODB_URI
+          },
           dbStatus: dbStatus,
           hint: 'Check MONGODB_URI environment variable'
         });
