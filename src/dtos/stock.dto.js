@@ -65,26 +65,46 @@ class StockDTO {
   }
 
   /**
-   * Format stock with latest price
+   * Format stock with latest price (matches API documentation)
    * @param {Object} stock - StockMetadata
    * @param {Object} latestPrice - StockPrice
-   * @returns {Object} Formatted DTO
+   * @returns {Object} Formatted DTO with stock and latestPrice nested
    */
   static toStockWithPriceResponse(stock, latestPrice) {
-    const base = {
-      code: stock.code,
-      name: stock.name,
-      sector: stock.sector,
-      isActive: stock.isActive,
-      createdAt: stock.createdAt,
-      updatedAt: stock.updatedAt,
+    const result = {
+      stock: {
+        _id: stock._id,
+        code: stock.code,
+        name: stock.name,
+        sector: stock.sector,
+        isActive: stock.isActive,
+        lastUpdated: stock.lastUpdated,
+        createdAt: stock.createdAt,
+        updatedAt: stock.updatedAt,
+      },
     };
 
     if (latestPrice) {
-      base.latestPrice = StockDTO.toHistoricalResponse(latestPrice);
+      result.latestPrice = {
+        _id: latestPrice._id,
+        stockId: latestPrice.stockId,
+        date: latestPrice.date,
+        open: latestPrice.open || 0,
+        ltp: latestPrice.ltp || 0,
+        high: latestPrice.high || 0,
+        low: latestPrice.low || 0,
+        close: latestPrice.close || 0,
+        ycp: latestPrice.ycp || 0,
+        change: latestPrice.change || 0,
+        trade: latestPrice.trade || 0,
+        value: latestPrice.value || 0,
+        volume: latestPrice.volume || 0,
+        dseIndex: latestPrice.dseIndex || 0,
+        scrapedAt: latestPrice.scrapedAt,
+      };
     }
 
-    return base;
+    return result;
   }
 
   /**

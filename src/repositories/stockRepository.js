@@ -79,10 +79,21 @@ class StockRepository {
   async findByStockId(stockId, days = 30) {
     const date = new Date();
     date.setDate(date.getDate() - days);
-    
+
     return StockPrice.find({
       stockId: new mongoose.Types.ObjectId(stockId),
       date: { $gte: date },
+    }).sort({ date: -1 });
+  }
+
+  /**
+   * Find the single latest price for a stock (no date restriction)
+   * @param {string} stockId - StockMetadata ID
+   * @returns {Promise<Object|null>} Latest price or null
+   */
+  async findLatestPriceByStockId(stockId) {
+    return StockPrice.findOne({
+      stockId: new mongoose.Types.ObjectId(stockId),
     }).sort({ date: -1 });
   }
 

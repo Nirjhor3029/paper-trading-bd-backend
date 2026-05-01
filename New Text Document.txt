@@ -1,0 +1,4 @@
+1. Latest Prices:
+https://paper-trading-bd-backend.vercel.app/api/stocks
+
+2. 

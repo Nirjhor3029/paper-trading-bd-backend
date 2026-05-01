@@ -28,8 +28,8 @@ class StockService {
       const stock = await stockRepo.findMetadataByCode(code);
       if (!stock) return null;
 
-      const latestPrice = await stockRepo.findByStockId(stock._id, 1);
-      return { stock, latestPrice: latestPrice[0] || null };
+      const latestPrice = await stockRepo.findLatestPriceByStockId(stock._id);
+      return { stock, latestPrice };
     } catch (error) {
       throw error;
     }
