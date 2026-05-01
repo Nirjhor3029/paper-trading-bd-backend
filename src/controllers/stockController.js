@@ -50,7 +50,7 @@ class StockController {
       }
 
       const formattedData = data.map((price) => StockDTO.toHistoricalResponse(price));
-      ResponseFormatter.success(res, formattedData, 'Historical data retrieved successfully');
+      ResponseFormatter.success(res, formattedData, 'Historical data retrieved successfully', 200, { stock_code: code.toUpperCase() });
     } catch (error) {
       next(error);
     }

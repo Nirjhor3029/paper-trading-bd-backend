@@ -1,0 +1,53 @@
+http://localhost:5000/api/stocks/BATASHOE/history?days=30 ei api te dekho
+{
+"success": true,
+"message": "Historical data retrieved successfully",
+"data": [
+{
+"date": "2026-04-30",
+"open": 0,
+"ltp": 813.5,
+"high": 834,
+"low": 812,
+"close": 814.8,
+"ycp": 809,
+"change": 4.5,
+"changePercent": "0.56",
+"trade": 51,
+"value": 0.688,
+"volume": 845
+},
+{
+"date": "2026-04-29",
+"open": 0,
+"ltp": 809,
+"high": 831,
+"low": 790,
+"close": 809,
+"ycp": 818.7,
+"change": -9.7,
+"changePercent": "-1.18",
+"trade": 176,
+"value": 1.225,
+"volume": 1509
+},
+{
+"date": "2026-04-28",
+"open": 824,
+"ltp": 814.2,
+"high": 840.7,
+"low": 814.2,
+"close": 818.7,
+"ycp": 830.8,
+"change": -16.6,
+"changePercent": "-2.00",
+"trade": 112,
+"value": 1.355,
+"volume": 1642
+}
+],
+"timestamp": "2026-05-01T13:13:58.768Z"
+}
+
+emon response asche
+'data' er age stock_code diye dao. tahole confirm howa jabe eita kon stock er data

@@ -10,13 +10,15 @@ class ResponseFormatter {
    * @param {*} data - Response data
    * @param {string} message - Success message
    * @param {number} statusCode - HTTP status code (default: 200)
+   * @param {Object} extra - Additional fields to include in response
    */
-  static success(res, data, message = 'Success', statusCode = 200) {
+  static success(res, data, message = 'Success', statusCode = 200, extra = {}) {
     return res.status(statusCode).json({
       success: true,
       message,
-      data,
+      ...extra,
       timestamp: new Date().toISOString(),
+      data,
     });
   }
 
