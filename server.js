@@ -29,6 +29,8 @@ const startServer = async () => {
       console.log(`  GET  ${apiBase}/api/stocks/:code`);
       console.log(`  GET  ${apiBase}/api/stocks/:code/history?days=30`);
       console.log(`  PUT  ${apiBase}/api/stocks/:code/metadata`);
+      console.log(`  GET  ${apiBase}/api/leaderboard`);
+      console.log(`  GET  ${apiBase}/api/leaderboard/me`);
       console.log('-'.repeat(60) + '\n');
       
       logger.info(`Server running in ${config.env} mode on port ${PORT}`);

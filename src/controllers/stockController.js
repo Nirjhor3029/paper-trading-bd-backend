@@ -4,6 +4,7 @@ const logger = require('../utils/logger');
 const StockDTO = require('../dtos/stock.dto');
 const ResponseFormatter = require('../utils/response');
 const { NotFoundError, ServiceUnavailableError } = require('../utils/errors');
+const stockRepository = require('../repositories/stockRepository');
 
 /**
  * Stock Controller - HTTP Request Handlers Only
@@ -12,8 +13,9 @@ const { NotFoundError, ServiceUnavailableError } = require('../utils/errors');
 class StockController {
   async getLatestPrices(req, res, next) {
     try {
-      const sortBy = req.query.sortBy || 'code'; // 'code', 'date', or 'sector'
-      const prices = await stockService.getAllLatestPrices(sortBy);
+      const sortBy = req.query.sortBy || 'code';
+      const filter = req.query.filter || 'all';
+      const prices = await stockService.getAllLatestPrices(sortBy, filter);
       const formattedData = StockDTO.toLatestPricesResponse(prices);
 
       ResponseFormatter.success(res, formattedData, 'Latest prices retrieved successfully');
@@ -143,6 +145,90 @@ class StockController {
       );
     } catch (error) {
       next(error);
+    }
+  }
+
+  async getStockTopbar(req, res, next) {
+    const data = await stockService.getStockTopbar()
+
+    ResponseFormatter.success(res, data, "fetched data")
+
+  }
+
+  async getStockDetail(req, res, next) {
+    try {
+      const { symbol } = req.params;
+      const { period = '1D' } = req.query;
+
+      if (!symbol) {
+        return res.status(400).json({ success: false, message: 'Stock symbol is required' });
+      }
+
+      // 1. Resolve metadata
+      const meta = await stockRepository.findMetadataByCode(symbol);
+
+      console.log("meta", meta)
+      if (!meta) {
+        return res.status(404).json({ success: false, message: `Stock '${symbol}' not found` });
+      }
+
+      // 2. Latest price snapshot
+      const latest = await stockRepository.findLatestPrice(meta._id);
+      if (!latest) {
+        return res.status(404).json({
+          success: false,
+          message: `No price data available for '${symbol}'`,
+        });
+      }
+
+      const sparkRaw = await stockRepository.findSparkData(meta._id, 30);
+      const spark = sparkRaw.map((d) => d.ltp);
+
+      // 4. Full OHLCV history for the requested period tab
+      const history = await stockRepository.findPriceHistory(meta._id, period);
+
+      // 5. Compute derived fields (mirrors frontend fakeData logic)
+      const changePercent =
+        latest.ycp && latest.ycp !== 0
+          ? parseFloat(((latest.change / latest.ycp) * 100).toFixed(2))
+          : 0;
+
+      // 6. Shape response to match MappedStock interface
+      const stock = {
+        symbol: meta.code,
+        name: meta.name,
+        sector: meta.sector,
+
+        // Price fields
+        price: latest.ltp,
+        open: latest.open,
+        high: latest.high,
+        low: latest.low,
+        ycp: latest.ycp,       // yesterday's close price
+        change: latest.change,
+        pct: changePercent,
+
+        // Volume / activity
+        vol: latest.volume,
+        value: latest.value,
+        trade: latest.trade,
+
+        // DSE ranking
+        dseIndex: latest.dseIndex,
+
+        // Chart data
+        spark,                  // number[] for SparkLine
+        history,                // full OHLCV for period tab (optional use)
+
+        // Meta timestamps
+        dataDate: latest.date,
+        lastUpdated: meta.lastUpdated,
+      };
+
+      return res.status(200).json({ success: true, data: stock });
+    } catch (err) {
+      console.error('[getStockDetail] Error:', err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   }
 }

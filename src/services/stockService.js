@@ -1,3 +1,5 @@
+const StockMetadata = require('../models/StockMetadata');
+const StockPrice = require('../models/StockPrice');
 const stockRepo = require('../repositories/stockRepository');
 
 /**
@@ -10,9 +12,9 @@ class StockService {
    * @param {string} sortBy - Sort order: 'code', 'date', 'sector'
    * @returns {Promise<Array>} Latest prices for all stocks
    */
-  async getAllLatestPrices(sortBy = 'code') {
+  async getAllLatestPrices(sortBy = 'code', filter = 'all') {
     try {
-      return await stockRepo.findLatestPrices(sortBy);
+      return await stockRepo.findLatestPrices(sortBy, filter);
     } catch (error) {
       throw error;
     }
@@ -87,6 +89,51 @@ class StockService {
     } catch (error) {
       throw error;
     }
+  }
+  async getStockTopbar() {
+    console.log("asdf")
+    const data = StockMetadata.aggregate([
+      {
+        $lookup: {
+          from: "stockprices",
+          localField: "_id",
+          foreignField: "stockId",
+          as: "price",
+          pipeline: [
+            {
+              $sort: {
+                createdAt: -1
+              }
+            },
+            {
+              $limit: 1
+            },
+            {
+              $project: {
+                ltp: 1,
+                change: 1
+              }
+            }
+          ]
+        }
+      },
+      {
+
+        $unwind: {
+          path: "$price",
+          preserveNullAndEmptyArrays: true
+        }
+
+      },
+      {
+        $project: {
+          name: 1,
+          code: 1,
+          price: 1
+        }
+      }
+    ])
+    return data
   }
 }
 

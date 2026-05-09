@@ -13,16 +13,24 @@ class StockRepository {
    * @param {string} sortBy - Sort order: 'code' (default), 'date', 'sector'
    * @returns {Promise<Array>} Array of latest stock prices with metadata
    */
-  async findLatestPrices(sortBy = 'code') {
-    // Determine final sort stage
-    let finalSort = { stockCode: 1 }; // Default: alphabetical
+  async findLatestPrices(sortBy = 'code', filter = 'all') {
+    let finalSort = { stockCode: 1 };
     if (sortBy === 'date') {
-      finalSort = { date: -1 }; // Most recent first
+      finalSort = { date: -1 };
     } else if (sortBy === 'sector') {
-      finalSort = { sector: 1, stockCode: 1 }; // By sector, then code
+      finalSort = { sector: 1, stockCode: 1 };
+    } else if (sortBy === 'volume') {
+      finalSort = { volume: -1 };
     }
 
-    return StockPrice.aggregate([
+    const matchStage = {};
+    if (filter === 'gainers') {
+      matchStage.change = { $gt: 0 };
+    } else if (filter === 'losers') {
+      matchStage.change = { $lt: 0 };
+    }
+
+    const pipeline = [
       { $sort: { date: -1, scrapedAt: -1 } },
       {
         $group: {
@@ -66,8 +74,15 @@ class StockRepository {
           },
         },
       },
-      { $sort: finalSort }
-    ]);
+    ];
+
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    pipeline.push({ $sort: finalSort });
+
+    return StockPrice.aggregate(pipeline);
   }
 
   /**
@@ -106,7 +121,7 @@ class StockRepository {
   async findHistoricalByCode(code, days = 30) {
     const stock = await StockMetadata.findOne({ code: code.toUpperCase() });
     if (!stock) return [];
-    
+
     return this.findByStockId(stock._id, days);
   }
 
@@ -185,6 +200,42 @@ class StockRepository {
       return StockMetadata.countDocuments();
     }
     return StockPrice.countDocuments();
+  }
+  async findPriceHistory(stockId, period = '1D') {
+    const periodDaysMap = { '1D': 1, '1W': 7, '1M': 30, '3M': 90, '1Y': 365 };
+    const days = periodDaysMap[period] ?? 30;
+
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    return StockPrice.find(
+      { stockId, date: { $gte: since } },
+      { date: 1, open: 1, high: 1, low: 1, ltp: 1, volume: 1, trade: 1, value: 1, _id: 0 }
+    )
+      .sort({ date: 1 })
+      .lean();
+  }
+
+  async findSparkData(stockId, days = 30) {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    return StockPrice.find(
+      { stockId, date: { $gte: since } },
+      { date: 1, ltp: 1, _id: 0 }
+    )
+      .sort({ date: 1 })
+      .lean();
+  }
+  async findLatestPrice(stockId) {
+    return StockPrice.findOne({ stockId }).sort({ date: -1 }).lean();
+  }
+  async findMetadataByCode(code) {
+    console.log(code)
+
+    const res = await StockMetadata.findOne({ code: code.toUpperCase() }).lean();
+    console.log(res, "---------------------")
+    return res
   }
 }
 
